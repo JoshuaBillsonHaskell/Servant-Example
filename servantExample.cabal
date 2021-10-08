@@ -24,8 +24,10 @@ source-repository head
 
 library
   exposed-modules:
+      InsertUser
       Lib
-      UserRepo
+      SQLite
+      User
   other-modules:
       Paths_servantExample
   hs-source-dirs:

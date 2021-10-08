@@ -1,4 +1,4 @@
-module UserRepo ( getUsers
+module SQLite ( getUsers
                 , getUserById
                 , insertUser
                 ) where
@@ -61,5 +61,5 @@ safeExecute conn query' q = do
 
 -- |Either Returns A User From A List Of Users Or Returns A ServerError If The List Is Empty
 userExists :: [User] -> Either ServerError User
-userExists [] = Left err404
+userExists [] = Left err404 {errBody = "{\"Status\": 1, \"Message\": \"User Not Found\"}"}
 userExists (x:_) = Right x

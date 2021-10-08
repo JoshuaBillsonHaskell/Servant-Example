@@ -16,13 +16,14 @@ import Control.Monad.Reader
 import Database.SQLite.Simple
 import Control.Monad.Except
 import Data.Text.Lazy.Encoding (encodeUtf8)
+import User
+import InsertUser
 
 import qualified Data.Text.Lazy as LT
 import qualified Data.ByteString.Lazy as LB
 import qualified Servant.Docs as Docs
-import qualified UserRepo as UR
+import qualified SQLite as SQL
 
-type User = UR.User
 type App = ReaderT Connection (ExceptT ServerError IO)
 
 -- |Types Implementing This Class Provide Access Registering And Retrieving Users Based On Authentication
@@ -32,12 +33,12 @@ class (MonadIO m) => UserRepo m where
     -- |Return The User With The Matching ID
     getUserById :: Int -> Maybe String -> m User
     -- |Insert The User Into The Database
-    insertUser :: Maybe String -> User -> m NoContent
+    insertUser :: Maybe String -> InsertUser -> m NoContent
 
 instance UserRepo App where
-    getUsers = UR.getUsers
-    getUserById = UR.getUserById
-    insertUser = UR.insertUser
+    getUsers = SQL.getUsers
+    getUserById = SQL.getUserById
+    insertUser = SQL.insertUser
 
 instance Docs.ToCapture (Capture "uid" Int) where
   toCapture _ = Docs.DocCapture "uid" "(integer) The ID of the person you want to fetch"
@@ -46,11 +47,14 @@ instance Docs.ToParam (QueryParam "apikey" String) where
     toParam _ = Docs.DocQueryParam "apikey" ["jahs7_3d", "hf5s_8hs", "dw4k83s_s7"] "API key to authenticate access" Docs.Normal
 
 instance Docs.ToSample User where
-  toSamples _ = Docs.samples [UR.User 1 "Joshua" "Billson", UR.User 2 "Romeo" "Billson"]
+  toSamples _ = Docs.samples [User 1 "Joshua" "Billson", User 2 "Romeo" "Billson"]
+  
+instance Docs.ToSample InsertUser where
+  toSamples _ = Docs.samples [InsertUser "Joshua" "Billson", InsertUser "Romeo" "Billson"]
 
 type API = "users" :> QueryParam "apikey" String :> Get '[JSON] [User]
       :<|> "users" :> Capture "uid" Int :> QueryParam "apikey" String :> Get '[JSON] User
-      :<|> "users" :> QueryParam "apikey" String :> ReqBody '[JSON] User :> PostNoContent
+      :<|> "users" :> QueryParam "apikey" String :> ReqBody '[JSON] InsertUser :> PostNoContent
       :<|> Raw
 
 server :: (UserRepo m) => ServerT API m
